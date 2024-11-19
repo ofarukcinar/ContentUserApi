@@ -12,7 +12,7 @@ builder.Services.AddDbContext<UserDbContext>(options =>
 builder.Services.AddTransient<IUserService, UserService>();
 
 var app = builder.Build();
-
+ 
 // Configure Middleware
 if (app.Environment.IsDevelopment())
 {
