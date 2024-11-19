@@ -91,10 +91,7 @@ node_modules/
 jspm_packages/
 bower_components/
 
-## Docker
-**/Dockerfile
-**/docker-compose.*
-*.dockerignore
+
 logs/
 
 ## Local build folders

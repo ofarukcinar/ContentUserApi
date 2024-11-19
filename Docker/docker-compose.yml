@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  contentservice:
+    build:
+      context: ../ContentApi
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ContentDb=Host=contentdb;Database=ContentDb;Username=postgres;Password=postgres
+    depends_on:
+      - contentdb
+    networks:
+      - app-network
+
+  userservice:
+    build:
+      context: ../UserApi
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__UserDb=Host=userdb;Database=UserDb;Username=postgres;Password=postgres
+    depends_on:
+      - userdb
+    networks:
+      - app-network
+
+  contentdb:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ContentDb
+    ports:
+      - "5433:5432"
+    networks:
+      - app-network
+
+  userdb:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: UserDb
+    ports:
+      - "5434:5432"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
