@@ -1,4 +1,3 @@
-
 public interface IContentService
 {
     Task<IEnumerable<Content>> GetAllContentsAsync();

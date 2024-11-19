@@ -1,12 +1,11 @@
-
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("contents")]
 public class ContentController : ControllerBase
 {
-    private readonly IContentService _service;
     private readonly HttpClient _httpClient;
+    private readonly IContentService _service;
 
     public ContentController(IContentService service, IHttpClientFactory httpClientFactory)
     {

@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,13 +11,14 @@ builder.Services.AddDbContext<UserDbContext>(options =>
 builder.Services.AddTransient<IUserService, UserService>();
 
 var app = builder.Build();
- 
+
 // Configure Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseAuthorization();
 app.MapControllers();
 

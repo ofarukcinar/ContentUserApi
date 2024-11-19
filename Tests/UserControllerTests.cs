@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 
 public class UserControllerTests
 {
-    private readonly UserController _controller;
     private readonly Mock<IUserService> _mockService;
+    private readonly UserController _controller;
 
     public UserControllerTests()
     {
@@ -18,8 +18,8 @@ public class UserControllerTests
         // Arrange
         var users = new List<User>
         {
-            new() { Id = 1, Name = "User1" },
-            new() { Id = 2, Name = "User2" }
+            new User { Id = 1, Name = "User1" },
+            new User { Id = 2, Name = "User2" }
         };
         _mockService.Setup(s => s.GetAllUsersAsync()).ReturnsAsync(users);
 
