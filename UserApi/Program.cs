@@ -13,13 +13,12 @@ builder.Services.AddTransient<IUserService, UserService>();
 
 var app = builder.Build();
 
-// Configure Middleware
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+    c.RoutePrefix = string.Empty; 
+});
 app.UseAuthorization();
 app.MapControllers();
 

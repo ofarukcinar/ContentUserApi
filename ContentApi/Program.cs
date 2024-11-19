@@ -17,7 +17,7 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-    c.RoutePrefix = string.Empty; // Swagger ana sayfa olarak yüklensin
+    c.RoutePrefix = string.Empty; 
 });
 app.UseAuthorization();
 app.MapControllers();
