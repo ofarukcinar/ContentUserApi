@@ -1,3 +1,5 @@
+namespace ContentApi.Services;
+
 public interface IContentService
 {
     Task<IEnumerable<Content>> GetAllContentsAsync();

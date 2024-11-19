@@ -1,4 +1,7 @@
+using ContentApi.Services;
 using Microsoft.AspNetCore.Mvc;
+
+namespace ContentApi.Controllers;
 
 [ApiController]
 [Route("contents")]

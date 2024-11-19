@@ -1,4 +1,6 @@
 using System.Net;
+using ContentApi.Controllers;
+using ContentApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Moq.Protected;

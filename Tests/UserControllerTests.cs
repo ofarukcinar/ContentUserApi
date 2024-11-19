@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using UserApi.Controllers;
+using UserApi.Services;
 
 public class UserControllerTests
 {

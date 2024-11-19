@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using UserApi.Services;
+
+namespace UserApi.Controllers;
 
 [ApiController]
 [Route("users")]

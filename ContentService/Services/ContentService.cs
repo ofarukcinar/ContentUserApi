@@ -1,3 +1,4 @@
+using ContentApi.Services;
 using Microsoft.EntityFrameworkCore;
 
 public class ContentService : IContentService
