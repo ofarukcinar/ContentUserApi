@@ -9,6 +9,7 @@ services:
       - "5001:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:5000
       - ConnectionStrings__ContentDb=Host=contentdb;Database=ContentDb;Username=postgres;Password=postgres
     depends_on:
       - contentdb
@@ -23,6 +24,7 @@ services:
       - "5002:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:5000
       - ConnectionStrings__UserDb=Host=userdb;Database=UserDb;Username=postgres;Password=postgres
     depends_on:
       - userdb

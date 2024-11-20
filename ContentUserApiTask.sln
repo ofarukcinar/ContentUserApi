@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserApi", "UserService\UserApi.csproj", "{0B79C849-0B84-4B5F-9B1C-381698466D53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserApi", "UserApi\UserApi.csproj", "{0B79C849-0B84-4B5F-9B1C-381698466D53}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ContentApi", "ContentService\ContentApi.csproj", "{16D151A6-4F64-4602-B04E-4918F5BC58F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ContentApi", "ContentApi\ContentApi.csproj", "{16D151A6-4F64-4602-B04E-4918F5BC58F4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3BB08B7B-F7B4-43FB-90B2-D6BA972DD3ED}"
 EndProject

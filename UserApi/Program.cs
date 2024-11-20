@@ -2,9 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using UserApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpClient();
 
-// Add services
 builder.Services.AddControllers();
+
+var environment = builder.Environment.EnvironmentName;
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<UserDbContext>(options =>

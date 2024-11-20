@@ -7,13 +7,13 @@ namespace ContentApi.Controllers;
 [Route("contents")]
 public class ContentController : ControllerBase
 {
-    private readonly HttpClient _httpClient;
+    private readonly ApiClient _apiClient;
     private readonly IContentService _service;
 
-    public ContentController(IContentService service, IHttpClientFactory httpClientFactory)
+    public ContentController(IContentService service, ApiClient apiClient)
     {
         _service = service;
-        _httpClient = httpClientFactory.CreateClient("UserService");
+        _apiClient = apiClient;
     }
 
     [HttpGet]
@@ -44,8 +44,7 @@ public class ContentController : ControllerBase
         var success = await _service.UpdateContentAsync(id, content);
         if (!success) return NotFound();
 
-        // Example REST call to UserService
-        var response = await _httpClient.GetAsync($"/users/{id}");
+        var response = await _apiClient.GetAsync($"users");
         if (response.IsSuccessStatusCode)
         {
             var user = await response.Content.ReadAsStringAsync();
