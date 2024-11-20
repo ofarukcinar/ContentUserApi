@@ -1,4 +1,5 @@
 using System;
+using ContentApi.Helper;
 using ContentApi.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +19,25 @@ builder.Services.AddDbContext<ContentDbContext>(options =>
 builder.Services.AddTransient<IContentService, ContentService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ApiClient>();
+
 var app = builder.Build();
+
+// Veritabanını otomatik migrate et
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ContentDbContext>();
+        context.Database.Migrate(); // Migration işlemini uygula
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Migration Error: {ex.Message}");
+        throw;
+    }
+}
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>

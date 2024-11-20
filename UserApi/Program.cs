@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using UserApi.Helper;
 using UserApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("UserDb")));
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddSingleton<ApiClient>();
 
 var app = builder.Build();
 

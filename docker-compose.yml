@@ -3,7 +3,7 @@ version: '3.8'
 services:
   contentservice:
     build:
-      context: ../ContentApi
+      context: ContentApi
       dockerfile: Dockerfile
     ports:
       - "5001:5000"
@@ -18,7 +18,7 @@ services:
 
   userservice:
     build:
-      context: ../UserApi
+      context: UserApi
       dockerfile: Dockerfile
     ports:
       - "5002:5000"
