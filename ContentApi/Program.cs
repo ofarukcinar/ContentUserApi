@@ -22,21 +22,7 @@ builder.Services.AddSingleton<ApiClient>();
 
 var app = builder.Build();
 
-// Veritabanını otomatik migrate et
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<ContentDbContext>();
-        context.Database.Migrate(); // Migration işlemini uygula
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Migration Error: {ex.Message}");
-        throw;
-    }
-}
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();

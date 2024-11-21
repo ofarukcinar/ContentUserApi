@@ -34,7 +34,9 @@ namespace ContentApi.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -43,6 +45,22 @@ namespace ContentApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Contents");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Body = "This is the first content.",
+                            CreatedAt = new DateTime(2024, 11, 20, 14, 54, 14, 980, DateTimeKind.Utc).AddTicks(7530),
+                            Title = "Welcome to Content API"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Body = "This is another piece of content.",
+                            CreatedAt = new DateTime(2024, 11, 20, 14, 54, 14, 980, DateTimeKind.Utc).AddTicks(7530),
+                            Title = "Second Content"
+                        });
                 });
 #pragma warning restore 612, 618
         }

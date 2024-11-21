@@ -3,7 +3,7 @@ version: '3.8'
 services:
   contentservice:
     build:
-      context: ContentApi
+      context: ./ContentApi
       dockerfile: Dockerfile
     ports:
       - "5001:5000"
@@ -12,13 +12,14 @@ services:
       - ASPNETCORE_URLS=http://*:5000
       - ConnectionStrings__ContentDb=Host=contentdb;Database=ContentDb;Username=postgres;Password=postgres
     depends_on:
-      - contentdb
+      contentdb:
+        condition: service_healthy
     networks:
       - app-network
 
   userservice:
     build:
-      context: UserApi
+      context: ./UserApi
       dockerfile: Dockerfile
     ports:
       - "5002:5000"
@@ -27,7 +28,8 @@ services:
       - ASPNETCORE_URLS=http://*:5000
       - ConnectionStrings__UserDb=Host=userdb;Database=UserDb;Username=postgres;Password=postgres
     depends_on:
-      - userdb
+      userdb:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -41,6 +43,11 @@ services:
       - "5433:5432"
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   userdb:
     image: postgres:latest
@@ -52,6 +59,11 @@ services:
       - "5434:5432"
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   app-network:

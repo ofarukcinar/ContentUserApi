@@ -1,47 +1,68 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using UserApi.Models.RequestModel;
 using UserApi.Models.ResponseModels;
 using UserApi.Services;
 
 namespace UserApi.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("users")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
+    private readonly string _jwtSecret;
 
-    public UserController(IUserService service)
+    public UserController(IUserService service ,IConfiguration configuration)
     {
         _service = service;
-    }
+        _jwtSecret = configuration["JwtSettings:Key"];
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllUsers()
-    {
-        var users = await _service.GetAllUsersAsync();
-        return Ok(new ResponseModel<IEnumerable<User>>(users));
     }
-
+    [AllowAnonymous]
+    [Route("login")]
     [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] User user)
+    public IActionResult Login([FromBody] UserLoginRequestModel userLoginRequest)
+    {
+        var userId =  _service.ValidateUser(userLoginRequest);
+        if (userId.Result == 0) return Ok(new ResponseModel<string>("", "UserName or Password is incorrect"));
+
+        var token = GenerateToken(userId.Result);
+
+        return Ok(new ResponseModel<string>(token));
+    }
+    [HttpGet]
+    public IActionResult GetAllUsers()
+    {
+        var users = _service.GetAllUsers();
+        return Ok(new ResponseModel<IEnumerable<UserResponseModel>>(users));
+    }
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] UserCreateRequestModel user)
     {
         var createdUser = await _service.CreateUserAsync(user);
         if (createdUser == null)
         {
             return BadRequest(new ResponseModel<User>(null, "Failed to create user."));
         }
-        return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, new ResponseModel<User>(createdUser));
+        return CreatedAtAction(nameof(GetUserById), new { id = createdUser }, new ResponseModel<UserResponseModel>(createdUser));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUserById(int id)
+    public IActionResult GetUserById(int id)
     {
-        var user = await _service.GetUserByIdAsync(id);
+        var user = _service.GetUserById(id);
         if (user == null)
         {
             return NotFound(new ResponseModel<User>(null, "User not found."));
         }
-        return Ok(new ResponseModel<User>(user));
+        return Ok(new ResponseModel<UserResponseModel>(user));
     }
 
     [HttpPut("{id}")]
@@ -64,5 +85,22 @@ public class UserController : ControllerBase
             return NotFound(new ResponseModel<bool>(false, "User not found or delete failed."));
         }
         return Ok(new ResponseModel<bool>(true, "User deleted successfully."));
+    }
+    private string GenerateToken(int id)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        
+        var key = Encoding.ASCII.GetBytes(_jwtSecret);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[] { new Claim("id", id.ToString()) }),
+            Expires = DateTime.UtcNow.AddDays(7),
+            Issuer = "Test", // Issuer burada belirtiliyor
+            Audience = "Test", // Audience burada belirtiliyor
+            SigningCredentials =
+          new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSecret)), SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
     }
 }

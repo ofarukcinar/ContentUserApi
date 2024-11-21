@@ -1,4 +1,8 @@
+using Mapster;
 using Microsoft.EntityFrameworkCore;
+using UserApi.Helper;
+using UserApi.Models.RequestModel;
+using UserApi.Models.ResponseModels;
 using UserApi.Services;
 
 public class UserService : IUserService
@@ -10,22 +14,42 @@ public class UserService : IUserService
         _context = context;
     }
 
-    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    public IEnumerable<UserResponseModel> GetAllUsers()
     {
-        return await _context.Users.ToListAsync();
+        return _context.Users.ToListAsync().Result.Adapt<List<UserResponseModel>>();
     }
 
-    public async Task<User> GetUserByIdAsync(int id)
+    public UserResponseModel GetUserById(int id)
     {
-        return await _context.Users.FindAsync(id);
+        return _context.Users.Find(id).Adapt<UserResponseModel>();
     }
 
-    public async Task<User> CreateUserAsync(User user)
+    public async Task<UserResponseModel> CreateUserAsync(UserCreateRequestModel userRM)
     {
+        var hasher = new Hasher(userRM.Password);
+        var user = userRM.Adapt<User>();
+        user.Password = Convert.ToBase64String(hasher.ToArray());
         user.CreatedAt = DateTime.UtcNow;
+        var role = await _context.Roles.FindAsync(userRM.RoleId);
+        user.RoleId = role.Id;
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
-        return user;
+        var userDetail = userRM.Adapt<UserDetails>();
+         userDetail.UserId = user.Id;
+        userDetail.CreatedAt=DateTime.UtcNow;
+        _context.UserDetails.Add(userDetail);
+        await _context.SaveChangesAsync();
+        var userResponse = user.Adapt<UserResponseModel>();
+        return userResponse;
+    }
+    public async Task<int> ValidateUser(UserLoginRequestModel? loginRequest)
+    {
+        if (loginRequest == null) return 0;
+        var user =  _context.Users.FirstOrDefault(x => x.Email == loginRequest.Mail);
+        if(user == null) return 0;
+        var hasher = new Hasher(Convert.FromBase64String(user.Password));
+        if (user?.Password != null && !hasher.Verify(loginRequest.Password)) return 0;
+        return user.Id;
     }
 
     public async Task<bool> UpdateUserAsync(int id, User user)
@@ -49,3 +73,4 @@ public class UserService : IUserService
         return true;
     }
 }
+

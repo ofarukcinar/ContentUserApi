@@ -1,147 +1,173 @@
+using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using ContentApi.Controllers;
+using ContentApi.Helper;
+using ContentApi.Models;
+using ContentApi.Models.ResponseModels;
 using ContentApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Moq.Protected;
+using Xunit;
 
 public class ContentControllerTests
 {
+    private readonly Mock<IContentService> _mockService;
+    private readonly Mock<ApiClient> _mockApiClient;
     private readonly ContentController _controller;
-    private readonly Mock<IContentService> _mockContentService;
-    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
 
     public ContentControllerTests()
     {
-        _mockContentService = new Mock<IContentService>();
-        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockService = new Mock<IContentService>();
 
-        // Mock HttpClient setup
-        var handlerMock = new Mock<HttpMessageHandler>();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{\"id\":1,\"name\":\"Test User\"}")
-            });
-
-        var httpClient = new HttpClient(handlerMock.Object)
+        var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+        var fakeHttpClient = new HttpClient(mockHttpMessageHandler.Object)
         {
-            BaseAddress = new Uri("https://fakeapi.com")
+            BaseAddress = new System.Uri("https://fakeapi.com/")
         };
 
-        _mockHttpClientFactory.Setup(_ => _.CreateClient("UserService")).Returns(httpClient);
-
-        _controller = new ContentController(_mockContentService.Object, _mockHttpClientFactory.Object);
+        _mockApiClient = new Mock<ApiClient>(fakeHttpClient);
+        _controller = new ContentController(_mockService.Object, _mockApiClient.Object);
     }
 
     [Fact]
-    public async Task GetAllContents_ReturnsOkResult_WithListOfContents()
+    public async Task GetAllContents_ReturnsOkResult_WithContents()
     {
         // Arrange
-        var contents = new List<Content>
-        {
-            new() { Id = 1, Title = "Content 1" },
-            new() { Id = 2, Title = "Content 2" }
-        };
-        _mockContentService.Setup(s => s.GetAllContentsAsync()).ReturnsAsync(contents);
+        var contents = new List<Content> { new Content { Id = 1, Title = "Sample Content" } };
+        _mockService.Setup(s => s.GetAllContentsAsync()).ReturnsAsync(contents);
 
         // Act
         var result = await _controller.GetAllContents();
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnContents = Assert.IsType<List<Content>>(okResult.Value);
-        Assert.Equal(2, returnContents.Count);
+        var response = Assert.IsType<ResponseModel<IEnumerable<Content>>>(okResult.Value);
+        Assert.Equal(contents, response.Data);
     }
 
     [Fact]
-    public async Task CreateContent_ReturnsCreatedAtActionResult()
+    public async Task CreateContent_ReturnsCreatedAtActionResult_WithCreatedContent()
     {
         // Arrange
-        var content = new Content { Id = 1, Title = "New Content" };
-        _mockContentService.Setup(s => s.CreateContentAsync(It.IsAny<Content>())).ReturnsAsync(content);
+        var newContent = new Content { Id = 1, Title = "New Content" };
+        _mockService.Setup(s => s.CreateContentAsync(It.IsAny<Content>())).ReturnsAsync(newContent);
 
         // Act
-        var result = await _controller.CreateContent(content);
+        var result = await _controller.CreateContent(newContent);
 
         // Assert
-        var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result);
-        var returnContent = Assert.IsType<Content>(createdAtActionResult.Value);
-        Assert.Equal(content.Id, returnContent.Id);
+        var createdAtResult = Assert.IsType<CreatedAtActionResult>(result);
+        var response = Assert.IsType<ResponseModel<Content>>(createdAtResult.Value);
+        Assert.Equal(newContent, response.Data);
     }
 
     [Fact]
-    public async Task GetContentById_ContentExists_ReturnsOkResult()
+    public async Task GetContentById_ReturnsOkResult_WhenContentExists()
     {
         // Arrange
-        var content = new Content { Id = 1, Title = "Existing Content" };
-        _mockContentService.Setup(s => s.GetContentByIdAsync(1)).ReturnsAsync(content);
+        var content = new Content { Id = 1, Title = "Sample Content" };
+        _mockService.Setup(s => s.GetContentByIdAsync(1)).ReturnsAsync(content);
 
         // Act
         var result = await _controller.GetContentById(1);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnContent = Assert.IsType<Content>(okResult.Value);
-        Assert.Equal(content.Id, returnContent.Id);
+        var response = Assert.IsType<ResponseModel<Content>>(okResult.Value);
+        Assert.Equal(content, response.Data);
     }
 
     [Fact]
-    public async Task GetContentById_ContentDoesNotExist_ReturnsNotFound()
+    public async Task GetContentById_ReturnsNotFound_WhenContentDoesNotExist()
     {
         // Arrange
-        _mockContentService.Setup(s => s.GetContentByIdAsync(1)).ReturnsAsync((Content)null);
+        _mockService.Setup(s => s.GetContentByIdAsync(1)).ReturnsAsync((Content)null);
 
         // Act
         var result = await _controller.GetContentById(1);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<Content>>(notFoundResult.Value);
+        Assert.Null(response.Data);
     }
 
     [Fact]
-    public async Task UpdateContent_UserServiceCall_Successful()
+    public async Task UpdateContent_ReturnsOkResult_WhenSuccessful()
     {
         // Arrange
         var content = new Content { Id = 1, Title = "Updated Content" };
-        _mockContentService.Setup(s => s.UpdateContentAsync(1, content)).ReturnsAsync(true);
+        _mockService.Setup(s => s.UpdateContentAsync(1, content)).ReturnsAsync(true);
+
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("User data")
+        };
+
+        _mockApiClient.Setup(c => c.GetAsync("users"))
+                      .ReturnsAsync(httpResponse);
 
         // Act
         var result = await _controller.UpdateContent(1, content);
 
         // Assert
-        Assert.IsType<NoContentResult>(result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<bool>>(okResult.Value);
+        Assert.True(response.Data);
     }
 
     [Fact]
-    public async Task DeleteContent_ContentExists_ReturnsNoContent()
+    public async Task UpdateContent_ReturnsOkResult_WhenApiClientFails()
     {
         // Arrange
-        _mockContentService.Setup(s => s.DeleteContentAsync(1)).ReturnsAsync(true);
+        var content = new Content { Id = 1, Title = "Updated Content" };
+        _mockService.Setup(s => s.UpdateContentAsync(1, content)).ReturnsAsync(true);
+
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+
+        _mockApiClient.Setup(c => c.GetAsync("users"))
+                      .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _controller.UpdateContent(1, content);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<bool>>(okResult.Value);
+        Assert.True(response.Data);
+    }
+
+    [Fact]
+    public async Task DeleteContent_ReturnsOkResult_WhenSuccessful()
+    {
+        // Arrange
+        _mockService.Setup(s => s.DeleteContentAsync(1)).ReturnsAsync(true);
 
         // Act
         var result = await _controller.DeleteContent(1);
 
         // Assert
-        Assert.IsType<NoContentResult>(result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<bool>>(okResult.Value);
+        Assert.True(response.Data);
     }
 
     [Fact]
-    public async Task DeleteContent_ContentDoesNotExist_ReturnsNotFound()
+    public async Task DeleteContent_ReturnsNotFound_WhenContentDoesNotExist()
     {
         // Arrange
-        _mockContentService.Setup(s => s.DeleteContentAsync(1)).ReturnsAsync(false);
+        _mockService.Setup(s => s.DeleteContentAsync(1)).ReturnsAsync(false);
 
         // Act
         var result = await _controller.DeleteContent(1);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<bool>>(notFoundResult.Value);
+        Assert.False(response.Data);
     }
 }
