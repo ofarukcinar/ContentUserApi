@@ -10,7 +10,7 @@ This project is a microservices-based application built using .NET Core. It cons
 ## Technologies Used
 
 - **Programming Language**: C#
-- **Framework**: .NET Core 6
+- **Framework**: .NET 8
 - **API Gateway**: Ocelot
 - **Authentication**: JWT (JSON Web Tokens)
 - **Dependency Injection**: Built-in .NET DI container
@@ -43,14 +43,14 @@ This project is a microservices-based application built using .NET Core. It cons
 ## Installation
 
 ### Prerequisites
-1. Install [.NET SDK](https://dotnet.microsoft.com/download) version 6.0 or higher.
+1. Install [.NET SDK](https://dotnet.microsoft.com/download) version 8.0 or higher.
 2. Install [Docker](https://www.docker.com/) and Docker Compose.
 3. Clone this repository using Git.
 
 ### Steps
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/ofarukcinar/ContentUserApi.git
    ```
 
 2. **Navigate to the project directory**:
