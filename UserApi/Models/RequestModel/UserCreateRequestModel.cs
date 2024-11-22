@@ -1,4 +1,3 @@
-
 namespace UserApi.Models.RequestModel;
 
 public class UserCreateRequestModel
@@ -7,5 +6,5 @@ public class UserCreateRequestModel
     public string Password { get; set; }
     public string Email { get; set; }
     public int RoleId { get; set; }
-    public string  Address { get; set; }
+    public string Address { get; set; }
 }

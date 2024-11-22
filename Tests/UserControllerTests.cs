@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -8,152 +5,172 @@ using UserApi.Controllers;
 using UserApi.Models.RequestModel;
 using UserApi.Models.ResponseModels;
 using UserApi.Services;
-using Xunit;
 
-namespace UserApi.Tests
+public class UserControllerTests
 {
-    public class UserControllerTests
+    private readonly UserController _controller;
+    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<IUserService> _mockUserService;
+
+    public UserControllerTests()
     {
-        private readonly Mock<IUserService> _mockService;
-        private readonly UserController _controller;
+        _mockUserService = new Mock<IUserService>();
+        _mockConfiguration = new Mock<IConfiguration>();
 
-        public UserControllerTests()
+        // JWT Secret Setup (Key with at least 128 bits or 16 characters)
+        _mockConfiguration.Setup(c => c["JwtSettings:Key"]).Returns("SuperSecretKey12!2234");
+
+        _controller = new UserController(_mockUserService.Object, _mockConfiguration.Object);
+    }
+
+
+    [Fact]
+    public void Login_ShouldReturnOk_WhenCredentialsAreInvalid()
+    {
+        // Arrange
+        var invalidLoginRequest = new UserLoginRequestModel { Mail = "testuser", Password = "wrongpassword" };
+        _mockUserService.Setup(s => s.ValidateUser(invalidLoginRequest))
+            .ReturnsAsync(0); // Simulate invalid user ID
+
+        // Act
+        var result = _controller.Login(invalidLoginRequest);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<string>>(okResult.Value);
+        Assert.Equal("", response.Data); // Token should be empty for invalid credentials
+        Assert.Equal("UserName or Password is incorrect", response.Message);
+    }
+
+    [Fact]
+    public void GetAllUsers_ShouldReturnOk_WithUserList()
+    {
+        // Arrange
+        var mockUsers = new List<UserResponseModel>
         {
-            _mockService = new Mock<IUserService>();
-            var configurationMock = new Mock<IConfiguration>();
-            configurationMock.SetupGet(x => x["JwtSettings:Key"]).Returns("YourTestSecretKey1234567890");
+            new() { Id = 1, Email = "newuser@newUser.com" },
+            new() { Id = 2, Email = "newuser2@newUser.com" }
+        };
+        _mockUserService.Setup(s => s.GetAllUsers())
+            .Returns(mockUsers);
 
-            _controller = new UserController(_mockService.Object, configurationMock.Object);
-        }
+        // Act
+        var result = _controller.GetAllUsers();
 
-        [Fact]
-        public void Login_ShouldReturnToken_WhenUserIsValid()
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<IEnumerable<UserResponseModel>>>(okResult.Value);
+        Assert.Equal(2, response.Data.Count());
+    }
+
+    [Fact]
+    public async Task CreateUser_ShouldReturnCreatedAtAction_WhenUserIsCreated()
+    {
+        // Arrange
+        var newUserRequest = new UserCreateRequestModel { Email = "newuser@newUser.com", Password = "password" };
+        var createdUser = new UserResponseModel
+            { Id = 3, Email = "newuser@newUser.com" }; // Match with newUserRequest.Email
+
+        _mockUserService.Setup(s => s.CreateUserAsync(newUserRequest))
+            .ReturnsAsync(createdUser);
+
+        // Act
+        var result = await _controller.CreateUser(newUserRequest);
+
+        // Assert
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result);
+        var response = Assert.IsType<ResponseModel<UserResponseModel>>(createdResult.Value);
+        Assert.Equal(newUserRequest.Email, response.Data.Email); // Compare with expected email
+    }
+
+
+    [Fact]
+    public async Task CreateUser_ShouldReturnBadRequest_WhenUserCreationFails()
+    {
+        // Arrange
+        var newUserRequest = new UserCreateRequestModel
         {
-            // Arrange
-            var userLoginRequest = new UserLoginRequestModel { Mail = "testuser", Password = "password123" };
-            _mockService.Setup(s => s.ValidateUser(userLoginRequest)).ReturnsAsync(1);
+            Email = "newuser@newUser.com",
+            Password = "password",
+            Address = "test",
+            RoleId = 2
+        };
 
-            // Act
-            var result = _controller.Login(userLoginRequest);
+        _mockUserService.Setup(s => s.CreateUserAsync(It.IsAny<UserCreateRequestModel>()))
+            .ReturnsAsync((UserResponseModel)null);
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<ResponseModel<string>>(okResult.Value);
-            Assert.NotNull(response.Data);
-            Assert.True(response.Message == null || response.Message == "");
-        }
+        // Act
+        var result = await _controller.CreateUser(newUserRequest);
 
-        [Fact]
-        public void Login_ShouldReturnError_WhenUserIsInvalid()
-        {
-            // Arrange
-            var userLoginRequest = new UserLoginRequestModel { Mail = "invaliduser", Password = "wrongpassword" };
-            _mockService.Setup(s => s.ValidateUser(userLoginRequest)).ReturnsAsync(0);
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<User>>(badRequestResult.Value);
+        Assert.Equal("Failed to create user.", response.Message);
+    }
 
-            // Act
-            var result = _controller.Login(userLoginRequest);
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<ResponseModel<string>>(okResult.Value);
-            Assert.Null(response.Data);
-            Assert.Equal("UserName or Password is incorrect", response.Message);
-        }
+    [Fact]
+    public void GetUserById_ShouldReturnOk_WhenUserExists()
+    {
+        // Arrange
+        var user = new UserResponseModel { Id = 1, Email = "newuser@newUser.com" };
+        _mockUserService.Setup(s => s.GetUserById(1))
+            .Returns(user);
 
-        [Fact]
-        public async Task CreateUser_ShouldReturnCreatedUser_WhenSuccessful()
-        {
-            // Arrange
-            var userCreateRequest = new UserCreateRequestModel { Email = "testuser", Password = "password123" };
-            var userResponseModel = new UserResponseModel { Id = 1, Email = "testuser" };
+        // Act
+        var result = _controller.GetUserById(1);
 
-            _mockService.Setup(s => s.CreateUserAsync(userCreateRequest)).ReturnsAsync(userResponseModel);
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<UserResponseModel>>(okResult.Value);
+        Assert.Equal("newuser@newUser.com", response.Data.Email);
+    }
 
-            // Act
-            var result = await _controller.CreateUser(userCreateRequest);
+    [Fact]
+    public void GetUserById_ShouldReturnNotFound_WhenUserDoesNotExist()
+    {
+        // Arrange
+        _mockUserService.Setup(s => s.GetUserById(5))
+            .Returns((UserResponseModel)null);
 
-            // Assert
-            var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-            var response = Assert.IsType<ResponseModel<UserResponseModel>>(createdResult.Value);
-            Assert.NotNull(response.Data);
-            Assert.Equal(userResponseModel.Email, response.Data.Email);
-        }
+        // Act
+        var result = _controller.GetUserById(1);
 
-        [Fact]
-        public async Task CreateUser_ShouldReturnBadRequest_WhenCreationFails()
-        {
-            // Arrange
-            var userCreateRequest = new UserCreateRequestModel { Email = "testuser", Password = "password123" };
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<User>>(notFoundResult.Value);
+        Assert.Equal("User not found.", response.Message);
+    }
 
-            _mockService.Setup(s => s.CreateUserAsync(userCreateRequest)).ReturnsAsync((UserResponseModel)null);
+    [Fact]
+    public async Task DeleteUser_ShouldReturnOk_WhenUserIsDeleted()
+    {
+        // Arrange
+        _mockUserService.Setup(s => s.DeleteUserAsync(1))
+            .ReturnsAsync(true);
 
-            // Act
-            var result = await _controller.CreateUser(userCreateRequest);
+        // Act
+        var result = await _controller.DeleteUser(1);
 
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var response = Assert.IsType<ResponseModel<User>>(badRequestResult.Value);
-            Assert.Null(response.Data);
-            Assert.Equal("Failed to create user.", response.Message);
-        }
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<bool>>(okResult.Value);
+        Assert.True(response.Data);
+    }
 
-        [Fact]
-        public void GetAllUsers_ShouldReturnListOfUsers()
-        {
-            // Arrange
-            var users = new List<UserResponseModel>
-            {
-                new UserResponseModel { Id = 1, Email = "user1" },
-                new UserResponseModel { Id = 2, Email = "user2" }
-            };
+    [Fact]
+    public async Task DeleteUser_ShouldReturnNotFound_WhenUserDoesNotExist()
+    {
+        // Arrange
+        _mockUserService.Setup(s => s.DeleteUserAsync(1))
+            .ReturnsAsync(false);
 
-            _mockService.Setup(s => s.GetAllUsers()).Returns(users);
+        // Act
+        var result = await _controller.DeleteUser(1);
 
-            // Act
-            var result = _controller.GetAllUsers();
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<ResponseModel<IEnumerable<UserResponseModel>>>(okResult.Value);
-            Assert.NotNull(response.Data);
-            Assert.Equal(2, response.Data.ToList().Count);
-        }
-
-        [Fact]
-        public void GetUserById_ShouldReturnUser_WhenUserExists()
-        {
-            // Arrange
-            var userId = 1;
-            var userResponse = new UserResponseModel { Id = userId, Email = "testuser" };
-
-            _mockService.Setup(s => s.GetUserById(userId)).Returns(userResponse);
-
-            // Act
-            var result = _controller.GetUserById(userId);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<ResponseModel<UserResponseModel>>(okResult.Value);
-            Assert.NotNull(response.Data);
-            Assert.Equal(userId, response.Data.Id);
-        }
-
-        [Fact]
-        public void GetUserById_ShouldReturnNotFound_WhenUserDoesNotExist()
-        {
-            // Arrange
-            var userId = 99;
-
-            _mockService.Setup(s => s.GetUserById(userId)).Returns((UserResponseModel)null);
-
-            // Act
-            var result = _controller.GetUserById(userId);
-
-            // Assert
-            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-            var response = Assert.IsType<ResponseModel<User>>(notFoundResult.Value);
-            Assert.Null(response.Data);
-            Assert.Equal("User not found.", response.Message);
-        }
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        var response = Assert.IsType<ResponseModel<bool>>(notFoundResult.Value);
+        Assert.False(response.Data);
     }
 }

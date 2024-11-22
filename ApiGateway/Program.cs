@@ -1,17 +1,15 @@
-using Microsoft.Extensions.Configuration;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
-using Ocelot.Values;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Ocelot Configuration
 builder.Configuration
-    .AddJsonFile("ocelot.json", optional: false, reloadOnChange: true)
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+    .AddJsonFile("ocelot.json", false, true)
+    .AddJsonFile("appsettings.json", false, true);
 
 // Logging Configuration
 builder.Services.AddLogging(logging =>
@@ -74,7 +72,7 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            new string[] { }
         }
     });
 });
@@ -83,8 +81,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 

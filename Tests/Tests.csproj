@@ -22,8 +22,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ContentApi\ContentApi.csproj" />
-        <ProjectReference Include="..\UserApi\UserApi.csproj" />
+        <ProjectReference Include="..\ContentApi\ContentApi.csproj"/>
+        <ProjectReference Include="..\UserApi\UserApi.csproj"/>
     </ItemGroup>
 
 </Project>

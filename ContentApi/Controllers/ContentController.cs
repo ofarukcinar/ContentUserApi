@@ -29,10 +29,7 @@ public class ContentController : ControllerBase
     public async Task<IActionResult> CreateContent([FromBody] Content content)
     {
         var createdContent = await _service.CreateContentAsync(content);
-        if (createdContent == null)
-        {
-            return BadRequest(new ResponseModel<Content>(null, "Failed to create content."));
-        }
+        if (createdContent == null) return BadRequest(new ResponseModel<Content>(null, "Failed to create content."));
         return CreatedAtAction(
             nameof(GetContentById),
             new { id = createdContent.Id },
@@ -44,10 +41,7 @@ public class ContentController : ControllerBase
     public async Task<IActionResult> GetContentById(int id)
     {
         var content = await _service.GetContentByIdAsync(id);
-        if (content == null)
-        {
-            return NotFound(new ResponseModel<Content>(null, "Content not found."));
-        }
+        if (content == null) return NotFound(new ResponseModel<Content>(null, "Content not found."));
         return Ok(new ResponseModel<Content>(content));
     }
 
@@ -55,16 +49,11 @@ public class ContentController : ControllerBase
     public async Task<IActionResult> UpdateContent(int id, [FromBody] Content content)
     {
         var success = await _service.UpdateContentAsync(id, content);
-        if (!success)
-        {
-            return NotFound(new ResponseModel<bool>(false, "Content not found or update failed."));
-        }
+        if (!success) return NotFound(new ResponseModel<bool>(false, "Content not found or update failed."));
 
-        var response = await _apiClient.GetAsync($"users");
+        var response = await _apiClient.GetAsync("users");
         if (!response.IsSuccessStatusCode)
-        {
             return Ok(new ResponseModel<bool>(true, "Content updated successfully. Failed to fetch user data."));
-        }
 
         var userData = await response.Content.ReadAsStringAsync();
 
@@ -75,10 +64,7 @@ public class ContentController : ControllerBase
     public async Task<IActionResult> DeleteContent(int id)
     {
         var success = await _service.DeleteContentAsync(id);
-        if (!success)
-        {
-            return NotFound(new ResponseModel<bool>(false, "Content not found or delete failed."));
-        }
+        if (!success) return NotFound(new ResponseModel<bool>(false, "Content not found or delete failed."));
         return Ok(new ResponseModel<bool>(true, "Content deleted successfully."));
     }
 }

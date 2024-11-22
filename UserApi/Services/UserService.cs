@@ -35,18 +35,19 @@ public class UserService : IUserService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
         var userDetail = userRM.Adapt<UserDetails>();
-         userDetail.UserId = user.Id;
-        userDetail.CreatedAt=DateTime.UtcNow;
+        userDetail.UserId = user.Id;
+        userDetail.CreatedAt = DateTime.UtcNow;
         _context.UserDetails.Add(userDetail);
         await _context.SaveChangesAsync();
         var userResponse = user.Adapt<UserResponseModel>();
         return userResponse;
     }
+
     public async Task<int> ValidateUser(UserLoginRequestModel? loginRequest)
     {
         if (loginRequest == null) return 0;
-        var user =  _context.Users.FirstOrDefault(x => x.Email == loginRequest.Mail);
-        if(user == null) return 0;
+        var user = _context.Users.FirstOrDefault(x => x.Email == loginRequest.Mail);
+        if (user == null) return 0;
         var hasher = new Hasher(Convert.FromBase64String(user.Password));
         if (user?.Password != null && !hasher.Verify(loginRequest.Password)) return 0;
         return user.Id;
@@ -73,4 +74,3 @@ public class UserService : IUserService
         return true;
     }
 }
-

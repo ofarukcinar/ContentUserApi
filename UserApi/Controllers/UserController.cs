@@ -15,53 +15,50 @@ namespace UserApi.Controllers;
 [Route("users")]
 public class UserController : ControllerBase
 {
-    private readonly IUserService _service;
     private readonly string _jwtSecret;
+    private readonly IUserService _service;
 
-    public UserController(IUserService service ,IConfiguration configuration)
+    public UserController(IUserService service, IConfiguration configuration)
     {
         _service = service;
         _jwtSecret = configuration["JwtSettings:Key"];
-
     }
+
     [AllowAnonymous]
     [Route("login")]
     [HttpPost]
     public IActionResult Login([FromBody] UserLoginRequestModel userLoginRequest)
     {
-        var userId =  _service.ValidateUser(userLoginRequest);
+        var userId = _service.ValidateUser(userLoginRequest);
         if (userId.Result == 0) return Ok(new ResponseModel<string>("", "UserName or Password is incorrect"));
 
         var token = GenerateToken(userId.Result);
 
         return Ok(new ResponseModel<string>(token));
     }
+
     [HttpGet]
     public IActionResult GetAllUsers()
     {
         var users = _service.GetAllUsers();
         return Ok(new ResponseModel<IEnumerable<UserResponseModel>>(users));
     }
+
     [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] UserCreateRequestModel user)
     {
         var createdUser = await _service.CreateUserAsync(user);
-        if (createdUser == null)
-        {
-            return BadRequest(new ResponseModel<User>(null, "Failed to create user."));
-        }
-        return CreatedAtAction(nameof(GetUserById), new { id = createdUser }, new ResponseModel<UserResponseModel>(createdUser));
+        if (createdUser == null) return BadRequest(new ResponseModel<User>(null, "Failed to create user."));
+        return CreatedAtAction(nameof(GetUserById), new { id = createdUser },
+            new ResponseModel<UserResponseModel>(createdUser));
     }
 
     [HttpGet("{id}")]
     public IActionResult GetUserById(int id)
     {
         var user = _service.GetUserById(id);
-        if (user == null)
-        {
-            return NotFound(new ResponseModel<User>(null, "User not found."));
-        }
+        if (user == null) return NotFound(new ResponseModel<User>(null, "User not found."));
         return Ok(new ResponseModel<UserResponseModel>(user));
     }
 
@@ -69,10 +66,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> UpdateUser(int id, [FromBody] User user)
     {
         var success = await _service.UpdateUserAsync(id, user);
-        if (!success)
-        {
-            return NotFound(new ResponseModel<bool>(false, "User not found or update failed."));
-        }
+        if (!success) return NotFound(new ResponseModel<bool>(false, "User not found or update failed."));
         return Ok(new ResponseModel<bool>(true, "User updated successfully."));
     }
 
@@ -80,25 +74,24 @@ public class UserController : ControllerBase
     public async Task<IActionResult> DeleteUser(int id)
     {
         var success = await _service.DeleteUserAsync(id);
-        if (!success)
-        {
-            return NotFound(new ResponseModel<bool>(false, "User not found or delete failed."));
-        }
+        if (!success) return NotFound(new ResponseModel<bool>(false, "User not found or delete failed."));
         return Ok(new ResponseModel<bool>(true, "User deleted successfully."));
     }
+
     private string GenerateToken(int id)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        
+
         var key = Encoding.ASCII.GetBytes(_jwtSecret);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[] { new Claim("id", id.ToString()) }),
             Expires = DateTime.UtcNow.AddDays(7),
-            Issuer = "Test", // Issuer burada belirtiliyor
-            Audience = "Test", // Audience burada belirtiliyor
+            Issuer = "Test",
+            Audience = "Test",
             SigningCredentials =
-          new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSecret)), SecurityAlgorithms.HmacSha256Signature)
+                new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSecret)),
+                    SecurityAlgorithms.HmacSha256Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);

@@ -10,7 +10,9 @@
         }
       ],
       "UpstreamPathTemplate": "/user/swagger/{everything}",
-      "UpstreamHttpMethod": [ "GET" ]
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
     },
     {
       "DownstreamPathTemplate": "/swagger/{everything}",
@@ -22,7 +24,9 @@
         }
       ],
       "UpstreamPathTemplate": "/content/swagger/{everything}",
-      "UpstreamHttpMethod": [ "GET" ]
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
     },
     {
       "DownstreamPathTemplate": "/contents/{everything}",
@@ -34,7 +38,12 @@
         }
       ],
       "UpstreamPathTemplate": "/contents/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
     },
     {
       "DownstreamPathTemplate": "/users/{everything}",
@@ -46,7 +55,12 @@
         }
       ],
       "UpstreamPathTemplate": "/users/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
     }
   ],
   "GlobalConfiguration": {

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System;
 
 public class UserDbContext : DbContext
 {
@@ -44,8 +43,16 @@ public class UserDbContext : DbContext
 
         // User Seed Data
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Name = "John Doe", Email = "john@example.com", RoleId = 1, CreatedAt = DateTime.UtcNow, Password="Test" },
-            new User { Id = 2, Name = "Jane Doe", Email = "jane@example.com", RoleId = 2, CreatedAt = DateTime.UtcNow, Password ="Test" }
+            new User
+            {
+                Id = 1, Name = "John Doe", Email = "john@example.com", RoleId = 1, CreatedAt = DateTime.UtcNow,
+                Password = "Test"
+            },
+            new User
+            {
+                Id = 2, Name = "Jane Doe", Email = "jane@example.com", RoleId = 2, CreatedAt = DateTime.UtcNow,
+                Password = "Test"
+            }
         );
 
         // UserDetails Seed Data
