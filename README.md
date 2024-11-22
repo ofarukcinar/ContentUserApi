@@ -114,30 +114,3 @@ Migratons must be sent to the database after running docker to complete the migr
   ```bash
   dotnet test
   ```
-
----
-
-## Future Improvements
-- Add CI/CD pipelines for automated deployment.
-- Improve monitoring with tools like Prometheus and Grafana.
-- Implement caching with Redis.
-
----
-
-## Contributing
-
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Submit a pull request for review.
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-## Contact
-
-For further information, please contact the development team.
