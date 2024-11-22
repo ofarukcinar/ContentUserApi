@@ -23,9 +23,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ContentApi\ContentApi.csproj" />
-        <ProjectReference Include="..\ContentService\ContentApi.csproj"/>
         <ProjectReference Include="..\UserApi\UserApi.csproj" />
-        <ProjectReference Include="..\UserService\UserApi.csproj"/>
     </ItemGroup>
 
 </Project>
