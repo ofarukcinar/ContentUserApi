@@ -1,4 +1,5 @@
 using ContentApi.Helper;
+using ContentApi.Models.RequestModel;
 using ContentApi.Models.ResponseModels;
 using ContentApi.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -22,18 +23,18 @@ public class ContentController : ControllerBase
     public async Task<IActionResult> GetAllContents()
     {
         var contents = await _service.GetAllContentsAsync();
-        return Ok(new ResponseModel<IEnumerable<Content>>(contents));
+        return Ok(new ResponseModel<IEnumerable<ContentResponseModel>>(contents));
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateContent([FromBody] Content content)
+    public async Task<IActionResult> CreateContent([FromBody] CreateContentRequestModel content)
     {
         var createdContent = await _service.CreateContentAsync(content);
         if (createdContent == null) return BadRequest(new ResponseModel<Content>(null, "Failed to create content."));
         return CreatedAtAction(
             nameof(GetContentById),
             new { id = createdContent.Id },
-            new ResponseModel<Content>(createdContent, "Content created successfully.")
+            new ResponseModel<ContentResponseModel>(createdContent, "Content created successfully.")
         );
     }
 
@@ -42,7 +43,7 @@ public class ContentController : ControllerBase
     {
         var content = await _service.GetContentByIdAsync(id);
         if (content == null) return NotFound(new ResponseModel<Content>(null, "Content not found."));
-        return Ok(new ResponseModel<Content>(content));
+        return Ok(new ResponseModel<ContentResponseModel>(content));
     }
 
     [HttpPut("{id}")]

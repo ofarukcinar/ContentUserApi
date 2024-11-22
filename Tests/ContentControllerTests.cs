@@ -1,6 +1,7 @@
 using System.Net;
 using ContentApi.Controllers;
 using ContentApi.Helper;
+using ContentApi.Models.RequestModel;
 using ContentApi.Models.ResponseModels;
 using ContentApi.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ public class ContentControllerTests
     public async Task GetAllContents_ShouldReturnOk_WithContents()
     {
         // Arrange
-        var mockContents = new List<Content>
+        var mockContents = new List<ContentResponseModel>
         {
             new() { Id = 1, Title = "Content 1", Body = "Body 1" },
             new() { Id = 2, Title = "Content 2", Body = "Body 2" }
@@ -51,7 +52,7 @@ public class ContentControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var response = Assert.IsType<ResponseModel<IEnumerable<Content>>>(okResult.Value);
+        var response = Assert.IsType<ResponseModel<IEnumerable<ContentResponseModel>>>(okResult.Value);
         Assert.Equal(2, response.Data.Count());
     }
 
@@ -59,28 +60,30 @@ public class ContentControllerTests
     public async Task CreateContent_ShouldReturnCreatedAtAction_WhenContentIsCreated()
     {
         // Arrange
-        var newContent = new Content { Id = 3, Title = "New Content", Body = "New Body" };
+        var newContent = new CreateContentRequestModel { Title = "New Content", Body = "New Body" };
+        var createdContent = new ContentResponseModel { Id = 1, Title = "New Content", Body = "New Body" };
         _mockContentService.Setup(s => s.CreateContentAsync(newContent))
-            .ReturnsAsync(newContent);
+            .ReturnsAsync(createdContent);
 
         // Act
         var result = await _controller.CreateContent(newContent);
 
         // Assert
         var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-        var response = Assert.IsType<ResponseModel<Content>>(createdResult.Value);
+        var response = Assert.IsType<ResponseModel<ContentResponseModel>>(createdResult.Value);
         Assert.Equal("Content created successfully.", response.Message);
+        Assert.Equal("New Content", response.Data.Title);
     }
 
     [Fact]
     public async Task CreateContent_ShouldReturnBadRequest_WhenContentIsNotCreated()
     {
         // Arrange
-        _mockContentService.Setup(s => s.CreateContentAsync(It.IsAny<Content>()))
-            .ReturnsAsync((Content)null);
+        _mockContentService.Setup(s => s.CreateContentAsync(It.IsAny<CreateContentRequestModel>()))
+            .ReturnsAsync((ContentResponseModel)null);
 
         // Act
-        var result = await _controller.CreateContent(new Content());
+        var result = await _controller.CreateContent(new CreateContentRequestModel());
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -92,7 +95,7 @@ public class ContentControllerTests
     public async Task GetContentById_ShouldReturnOk_WhenContentExists()
     {
         // Arrange
-        var content = new Content { Id = 1, Title = "Content 1", Body = "Body 1" };
+        var content = new ContentResponseModel { Id = 1, Title = "Content 1", Body = "Body 1" };
         _mockContentService.Setup(s => s.GetContentByIdAsync(1))
             .ReturnsAsync(content);
 
@@ -101,7 +104,7 @@ public class ContentControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var response = Assert.IsType<ResponseModel<Content>>(okResult.Value);
+        var response = Assert.IsType<ResponseModel<ContentResponseModel>>(okResult.Value);
         Assert.Equal("Content 1", response.Data.Title);
     }
 
@@ -110,7 +113,7 @@ public class ContentControllerTests
     {
         // Arrange
         _mockContentService.Setup(s => s.GetContentByIdAsync(1))
-            .ReturnsAsync((Content)null);
+            .ReturnsAsync((ContentResponseModel)null);
 
         // Act
         var result = await _controller.GetContentById(1);
@@ -135,6 +138,7 @@ public class ContentControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         var response = Assert.IsType<ResponseModel<bool>>(okResult.Value);
         Assert.True(response.Data);
+        Assert.Equal("Content deleted successfully.", response.Message);
     }
 
     [Fact]
@@ -151,5 +155,6 @@ public class ContentControllerTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         var response = Assert.IsType<ResponseModel<bool>>(notFoundResult.Value);
         Assert.False(response.Data);
+        Assert.Equal("Content not found or delete failed.", response.Message);
     }
 }

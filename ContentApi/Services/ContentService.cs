@@ -1,4 +1,7 @@
+using ContentApi.Models.RequestModel;
+using ContentApi.Models.ResponseModels;
 using ContentApi.Services;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 public class ContentService : IContentService
@@ -10,22 +13,31 @@ public class ContentService : IContentService
         _context = context;
     }
 
-    public async Task<IEnumerable<Content>> GetAllContentsAsync()
+    public async Task<IEnumerable<ContentResponseModel>> GetAllContentsAsync()
     {
-        return await _context.Contents.ToListAsync();
+        var contents = await _context.Contents.ToListAsync();
+        return contents.Adapt<IEnumerable<ContentResponseModel>>();
     }
 
-    public async Task<Content> GetContentByIdAsync(int id)
+
+    public async Task<ContentResponseModel> GetContentByIdAsync(int id)
     {
-        return await _context.Contents.FindAsync(id);
+        var content = await _context.Contents.FindAsync(id);
+
+        if (content == null)
+            return null;
+
+        return content.Adapt<ContentResponseModel>();
     }
 
-    public async Task<Content> CreateContentAsync(Content content)
+
+    public async Task<ContentResponseModel> CreateContentAsync(CreateContentRequestModel createContentRequestModel)
     {
+        var content = createContentRequestModel.Adapt<Content>();
         content.CreatedAt = DateTime.UtcNow;
         _context.Contents.Add(content);
         await _context.SaveChangesAsync();
-        return content;
+        return content.Adapt<ContentResponseModel>();
     }
 
     public async Task<bool> UpdateContentAsync(int id, Content content)
